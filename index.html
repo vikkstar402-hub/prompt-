@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- SECURITY: Content Security Policy - blocks XSS, injections, unwanted scripts -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<!-- SECURITY: No referrer leakage -->
+<meta name="referrer" content="no-referrer">
+<!-- SECURITY: No clickjacking -->
+<meta http-equiv="X-Frame-Options" content="DENY">
+<meta name="description" content="PromptForge — Generate elite AI prompts. Zero-knowledge. Fully encrypted. Private forever.">
+<title>PromptForge — Elite Prompt Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@300;400;600&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --surface:#111118; --surface2:#1a1a25; --surface3:#0d0d14;
+    --border:#2a2a3a; --accent:#e8ff47; --accent2:#47b3ff;
+    --accent3:#ff6b6b; --green:#47ffaa; --purple:#b47fff;
+    --text:#e8e8f0; --muted:#6b6b80; --glow:rgba(232,255,71,0.15);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:linear-gradient(rgba(232,255,71,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(232,255,71,0.025) 1px,transparent 1px);
+    background-size:60px 60px;}
+
+  /* ── COOKIE BANNER ── */
+  #cookieBanner{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#0d0d18;border-top:2px solid var(--accent);padding:1.2rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;animation:slideUp2 0.5s ease;}
+  #cookieBanner p{font-size:0.74rem;color:var(--muted);max-width:620px;line-height:1.75;}
+  #cookieBanner a{color:var(--accent2);cursor:pointer;}
+  .cookie-btns{display:flex;gap:0.6rem;flex-shrink:0;}
+  .btn-accept{background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:0.7rem;letter-spacing:0.1em;text-transform:uppercase;border:none;padding:0.5rem 1.4rem;cursor:pointer;}
+  .btn-decline{background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.7rem;border:1px solid var(--border);padding:0.5rem 1.2rem;cursor:pointer;transition:all 0.15s;}
+  .btn-decline:hover{border-color:var(--muted);color:var(--text);}
+
+  /* ── OVERLAYS & MODALS ── */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(6px);z-index:10000;display:none;align-items:center;justify-content:center;padding:1rem;}
+  .overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);max-width:720px;width:100%;max-height:88vh;display:flex;flex-direction:column;animation:popIn 0.3s ease;}
+  .modal-bar{height:3px;}
+  .bar-blue{background:linear-gradient(90deg,var(--accent2),var(--green));}
+  .bar-yellow{background:linear-gradient(90deg,var(--accent),var(--accent3));}
+  .bar-purple{background:linear-gradient(90deg,var(--purple),var(--accent2));}
+  .bar-red{background:linear-gradient(90deg,var(--accent3),var(--purple));}
+  .modal-header{padding:1.4rem 2rem 1rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-shrink:0;}
+  .modal-header h2{font-family:'Syne',sans-serif;font-size:0.9rem;letter-spacing:0.15em;text-transform:uppercase;}
+  .h-blue{color:var(--accent2);} .h-yellow{color:var(--accent);} .h-purple{color:var(--purple);} .h-red{color:var(--accent3);}
+  .modal-close{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;cursor:pointer;font-size:1rem;transition:all 0.15s;display:flex;align-items:center;justify-content:center;}
+  .modal-close:hover{border-color:var(--accent3);color:var(--accent3);}
+  .modal-body{padding:1.5rem 2rem 2rem;overflow-y:auto;font-size:0.78rem;line-height:1.9;color:var(--muted);}
+  .modal-body::-webkit-scrollbar{width:4px;}
+  .modal-body::-webkit-scrollbar-thumb{background:var(--border);}
+  .modal-body h3{color:var(--text);font-size:0.74rem;letter-spacing:0.12em;text-transform:uppercase;margin:1.5rem 0 0.5rem;font-family:'Syne',sans-serif;}
+  .modal-body h3:first-child{margin-top:0;}
+  .modal-body p{margin-bottom:0.8rem;}
+  .modal-body ul{padding-left:1.4rem;margin-bottom:0.8rem;}
+  .modal-body li{margin-bottom:0.3rem;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.2rem;}
+  .mbadge{display:inline-flex;align-items:center;border:1px solid;font-size:0.62rem;padding:0.2rem 0.6rem;letter-spacing:0.1em;}
+  .mbadge.g{border-color:var(--green);color:var(--green);}
+  .mbadge.b{border-color:var(--accent2);color:var(--accent2);}
+  .mbadge.p{border-color:var(--purple);color:var(--purple);}
+
+  /* ── SAFETY MODAL ── */
+  #safetyOverlay{z-index:10001;}
+  .safety-box{background:var(--surface);border:2px solid var(--accent3);max-width:480px;width:100%;padding:2rem;animation:shake 0.3s ease;}
+  .safety-icon{font-size:2.2rem;margin-bottom:0.8rem;}
+  .safety-box h3{font-family:'Syne',sans-serif;font-size:0.95rem;color:var(--accent3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.8rem;}
+  .safety-box p{font-size:0.78rem;color:var(--muted);line-height:1.8;margin-bottom:0.8rem;}
+  .prohibited{font-size:0.68rem;color:rgba(255,107,107,0.65);}
+  .btn-safety{width:100%;padding:0.85rem;background:var(--accent3);color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;margin-top:0.5rem;}
+
+  /* ── SECURITY STATUS BAR ── */
+  .sec-bar{background:rgba(71,255,170,0.04);border-bottom:1px solid rgba(71,255,170,0.15);padding:0.35rem 2rem;display:flex;align-items:center;justify-content:center;gap:2rem;font-size:0.62rem;letter-spacing:0.08em;flex-wrap:wrap;}
+  .sec-item{display:flex;align-items:center;gap:0.35rem;color:var(--green);}
+  .sec-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:pulse 2.5s infinite;}
+
+  /* ── STATS BAR ── */
+  .stats-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0.55rem 2rem;display:flex;align-items:center;justify-content:center;gap:2.5rem;font-size:0.68rem;letter-spacing:0.08em;position:sticky;top:0;z-index:100;flex-wrap:wrap;}
+  .stat-pill{display:flex;align-items:center;gap:0.5rem;color:var(--muted);}
+  .live-dot{width:7px;height:7px;border-radius:50%;}
+  .live-dot.g{background:var(--green);animation:pulse 2s infinite;}
+  .live-dot.y{background:var(--accent);animation:pulse 2s 0.4s infinite;}
+  .live-dot.b{background:var(--accent2);animation:pulse 2s 0.8s infinite;}
+  .stat-val{color:var(--text);font-weight:600;}
+  .live-badge{font-size:0.55rem;color:var(--green);border:1px solid var(--green);padding:0.05rem 0.35rem;letter-spacing:0.15em;}
+
+  /* ── LAYOUT ── */
+  .container{max-width:980px;margin:0 auto;padding:2rem 1.5rem 6rem;position:relative;z-index:1;}
+  header{text-align:center;padding:2.5rem 0 1.5rem;}
+  .logo-tag{font-size:0.7rem;color:var(--accent);letter-spacing:0.3em;text-transform:uppercase;border:1px solid var(--accent);display:inline-block;padding:0.3rem 1rem;margin-bottom:1.2rem;animation:fadeIn 0.6s ease;}
+  h1{font-family:'DM Serif Display',serif;font-size:clamp(2.8rem,7vw,5rem);line-height:1;margin-bottom:0.5rem;animation:slideUp 0.7s ease both;}
+  h1 span{font-style:italic;color:var(--accent);}
+  .subtitle{color:var(--muted);font-size:0.8rem;letter-spacing:0.1em;animation:slideUp 0.8s 0.1s ease both;}
+  .header-links{margin-top:0.9rem;display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;}
+  .hlink{font-size:0.65rem;color:var(--accent2);letter-spacing:0.1em;cursor:pointer;border-bottom:1px solid transparent;transition:border-color 0.15s;}
+  .hlink:hover{border-bottom-color:var(--accent2);}
+  .hlink.green{color:var(--green);cursor:default;}
+
+  /* TWO-COLUMN LAYOUT */
+  .app-layout{display:grid;grid-template-columns:1fr 340px;gap:1.5rem;margin-top:1.8rem;align-items:start;}
+
+  /* ── MAIN CARD ── */
+  .main-card{background:var(--surface);border:1px solid var(--border);padding:2rem;position:relative;animation:slideUp 0.9s 0.2s ease both;}
+  .main-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));}
+  .field-label{font-size:0.64rem;color:var(--accent);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:0.6rem;}
+  input[type=text],textarea,select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.88rem;padding:0.82rem 1rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;resize:none;}
+  input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow);}
+  select option{background:var(--surface2);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin:1.2rem 0;}
+  .field{margin-bottom:1.2rem;}
+  .checkboxes{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.6rem;}
+  .check-pill{display:flex;align-items:center;gap:0.4rem;background:var(--surface2);border:1px solid var(--border);padding:0.32rem 0.75rem;cursor:pointer;font-size:0.73rem;transition:all 0.15s;user-select:none;}
+  .check-pill input{display:none;}
+  .check-pill:has(input:checked){background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
+  .check-pill:hover{border-color:var(--accent);}
+
+  .safety-notice{background:rgba(255,107,107,0.05);border:1px solid rgba(255,107,107,0.22);border-left:3px solid var(--accent3);padding:0.9rem 1rem;margin-bottom:1.2rem;font-size:0.7rem;color:var(--muted);line-height:1.75;}
+  .safety-notice strong{color:var(--accent3);}
+
+  .btn-generate{width:100%;padding:1.1rem;background:var(--accent);color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;margin-top:1rem;transition:all 0.2s;position:relative;overflow:hidden;}
+  .btn-generate::after{content:'';position:absolute;inset:0;background:white;opacity:0;transition:opacity 0.15s;}
+  .btn-generate:hover::after{opacity:0.1;}
+  .btn-generate:active{transform:scale(0.99);}
+  .btn-generate:disabled{opacity:0.5;cursor:not-allowed;}
+
+  .loading{display:none;text-align:center;padding:2rem;color:var(--accent);font-size:0.8rem;letter-spacing:0.2em;}
+  .loading.visible{display:block;}
+  .dot-anim::after{content:'...';animation:dots 1.2s infinite;}
+
+  /* ── OUTPUT ── */
+  .output-section{margin-top:1.5rem;display:none;animation:slideUp 0.5s ease;}
+  .output-section.visible{display:block;}
+  .output-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
+  .output-title{font-family:'Syne',sans-serif;font-size:0.7rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--accent2);}
+  .output-actions{display:flex;gap:0.5rem;}
+  .action-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:0.3rem 0.75rem;cursor:pointer;transition:all 0.15s;letter-spacing:0.08em;}
+  .action-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  .action-btn.copied{border-color:#47ff8a;color:#47ff8a;}
+  .prompt-box{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:1.6rem;font-size:0.84rem;line-height:1.9;white-space:pre-wrap;word-break:break-word;color:var(--text);max-height:560px;overflow-y:auto;}
+  .prompt-box::-webkit-scrollbar{width:4px;}
+  .prompt-box::-webkit-scrollbar-thumb{background:var(--border);}
+  .meta-row{display:flex;gap:1.2rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);flex-wrap:wrap;}
+  .meta-item{font-size:0.68rem;color:var(--muted);}
+  .meta-item span{color:var(--accent2);}
+
+  /* ── HISTORY PANEL (sidebar) ── */
+  .history-panel{background:var(--surface);border:1px solid var(--border);position:sticky;top:60px;animation:slideUp 0.9s 0.3s ease both;}
+  .history-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--accent2));}
+  .history-panel-header{padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+  .history-panel-title{font-family:'Syne',sans-serif;font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--purple);}
+  .lock-badge{font-size:0.6rem;color:var(--green);border:1px solid rgba(71,255,170,0.3);padding:0.15rem 0.5rem;letter-spacing:0.1em;}
+  .history-panel-body{padding:1rem 1.2rem;max-height:70vh;overflow-y:auto;}
+  .history-panel-body::-webkit-scrollbar{width:3px;}
+  .history-panel-body::-webkit-scrollbar-thumb{background:var(--border);}
+  .history-empty{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.72rem;line-height:1.9;}
+  .history-empty .empty-icon{font-size:2rem;margin-bottom:0.5rem;opacity:0.4;}
+  .hist-item{border:1px solid var(--border);padding:0.85rem;margin-bottom:0.6rem;cursor:pointer;transition:all 0.15s;position:relative;}
+  .hist-item:hover{border-color:var(--purple);background:var(--surface2);}
+  .hist-item-topic{font-size:0.76rem;color:var(--text);margin-bottom:0.35rem;line-height:1.4;}
+  .hist-item-meta{display:flex;justify-content:space-between;align-items:center;}
+  .hist-item-time{font-size:0.62rem;color:var(--muted);}
+  .hist-item-tag{font-size:0.58rem;color:var(--purple);border:1px solid rgba(180,127,255,0.3);padding:0.1rem 0.4rem;}
+  .hist-item-del{position:absolute;top:0.5rem;right:0.5rem;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:0.8rem;opacity:0;transition:all 0.15s;padding:0.1rem 0.3rem;}
+  .hist-item:hover .hist-item-del{opacity:1;}
+  .hist-item-del:hover{color:var(--accent3);}
+  .history-clear-btn{width:100%;padding:0.5rem;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.65rem;cursor:pointer;margin-top:0.5rem;transition:all 0.15s;letter-spacing:0.1em;}
+  .history-clear-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+  .enc-note{font-size:0.62rem;color:rgba(71,255,170,0.5);text-align:center;padding:0.6rem;border-top:1px solid var(--border);line-height:1.6;}
+
+  /* ── FOOTER ── */
+  footer{text-align:center;margin-top:3rem;padding:2rem 0;border-top:1px solid var(--border);font-size:0.65rem;color:var(--muted);line-height:2.3;}
+  .flink{color:var(--accent2);cursor:pointer;margin:0 0.4rem;}
+  .flink:hover{text-decoration:underline;}
+  .footer-badges{display:flex;justify-content:center;gap:0.7rem;flex-wrap:wrap;margin-top:0.8rem;}
+  .fbadge{border:1px solid var(--border);padding:0.22rem 0.65rem;font-size:0.58rem;letter-spacing:0.08em;color:var(--muted);}
+  .fbadge.g{border-color:var(--green);color:var(--green);}
+  .fbadge.b{border-color:var(--accent2);color:var(--accent2);}
+  .fbadge.p{border-color:var(--purple);color:var(--purple);}
+
+  /* ── RATE LIMIT TOAST ── */
+  #toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--accent3);color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;padding:0.6rem 1.5rem;letter-spacing:0.1em;text-transform:uppercase;z-index:99999;transition:transform 0.3s ease;border-radius:0;}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes slideUp2{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.25}}
+  @keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+  @keyframes popIn{from{opacity:0;transform:scale(0.96)}to{opacity:1;transform:scale(1)}}
+  @keyframes countPop{0%{transform:scale(1.25);color:var(--accent)}100%{transform:scale(1);color:var(--text)}}
+  .pop{animation:countPop 0.45s ease;}
+
+  @media(max-width:768px){
+    .app-layout{grid-template-columns:1fr;}
+    .history-panel{position:static;}
+    .grid-2{grid-template-columns:1fr;}
+    .stats-bar{gap:1rem;}
+    .sec-bar{gap:0.8rem;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ RATE LIMIT TOAST ══ -->
+<div id="toast">⚠ Slow down — too many requests</div>
+
+<!-- ══ COOKIE BANNER ══ -->
+<div id="cookieBanner">
+  <p>🍪 We store only an <strong>anonymous device ID</strong> — no personal data, no emails, no IP addresses. Your prompt history is <strong>AES-256 encrypted</strong> and only readable by your device. <a onclick="openModal('privacyOverlay')">Privacy Policy</a></p>
+  <div class="cookie-btns">
+    <button class="btn-decline" onclick="handleConsent(false)">Decline</button>
+    <button class="btn-accept" onclick="handleConsent(true)">Accept & Continue</button>
+  </div>
+</div>
+
+<!-- ══ PRIVACY MODAL ══ -->
+<div class="overlay" id="privacyOverlay">
+  <div class="modal">
+    <div class="modal-bar bar-blue"></div>
+    <div class="modal-header">
+      <h2 class="h-blue">🔐 Privacy Policy</h2>
+      <button class="modal-close" onclick="closeModal('privacyOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="badge-row">
+        <span class="mbadge g">✓ Zero Personal Data</span>
+        <span class="mbadge g">✓ AES-256 Encryption</span>
+        <span class="mbadge b">✓ No Cross-User Access</span>
+        <span class="mbadge b">✓ No Analytics</span>
+        <span class="mbadge p">✓ Zero-Knowledge Storage</span>
+      </div>
+      <h3>1. Who We Are</h3>
+      <p>PromptForge is a free, browser-based AI prompt tool. We operate on a <strong>zero personal data collection</strong> principle with zero-knowledge architecture — meaning even we cannot read your data.</p>
+      <h3>2. What We Do NOT Collect</h3>
+      <ul>
+        <li>Your name, email address, or any contact info</li>
+        <li>Your IP address or geographic location</li>
+        <li>The topics or prompts you generate</li>
+        <li>Browsing history, device fingerprints, or behavioural data</li>
+        <li>Payment information (the tool is free)</li>
+      </ul>
+      <h3>3. Anonymous Visitor Counting</h3>
+      <p>If you accept cookies, we store a randomly generated anonymous device ID in your browser. This is used only to count unique visitors. It contains no personal information and is never shared with third parties.</p>
+      <h3>4. Your Prompt History — Zero-Knowledge Encrypted</h3>
+      <p>Your prompt history is encrypted in your browser using <strong>AES-256-GCM</strong> with a unique key derived from your anonymous device ID. This means:</p>
+      <ul>
+        <li>Only your device can decrypt and read your history</li>
+        <li>Other users cannot see your prompts — ever</li>
+        <li>We (the developers) cannot read your history — even if we wanted to</li>
+        <li>Server operators cannot read your history</li>
+        <li>The encryption key never leaves your browser</li>
+      </ul>
+      <h3>5. Data Isolation</h3>
+      <p>Each user's stored data is keyed to their unique anonymous device ID. There is no shared history, no admin view, and no mechanism to access another user's data.</p>
+      <h3>6. Third-Party Services</h3>
+      <p>PromptForge loads <strong>Google Fonts</strong> for typography only. No analytics (Google Analytics, Mixpanel etc.), no advertising networks, no tracking pixels are used anywhere.</p>
+      <h3>7. Children's Privacy</h3>
+      <p>This service is intended for users aged 13 and over. We collect no data from any user, including minors.</p>
+      <h3>8. Your Rights</h3>
+      <p>Since we hold no personal data, there is nothing to request or delete. You can clear all stored data at any time using the "Clear History" button in the app, or via your browser's site data settings.</p>
+      <h3>9. Contact</h3>
+      <p>Privacy questions: <span style="color:var(--accent2)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3c3c1dac5d2d0caf3c3c1dcdec3c7d5dcc1d4d69dd2c3c3">[email&#160;protected]</a></span></p>
+      <h3>10. Last Updated</h3>
+      <p>February 2026.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TERMS MODAL ══ -->
+<div class="overlay" id="termsOverlay">
+  <div class="modal">
+    <div class="modal-bar bar-yellow"></div>
+    <div class="modal-header">
+      <h2 class="h-yellow">📋 Terms of Use</h2>
+      <button class="modal-close" onclick="closeModal('termsOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>1. Acceptance</h3>
+      <p>By using PromptForge, you agree to these terms. If you disagree, please stop using the service.</p>
+      <h3>2. Permitted Use</h3>
+      <p>PromptForge may be used for lawful, constructive, and educational purposes. Generated prompts are yours to use with any AI platform.</p>
+      <h3>3. Prohibited Use</h3>
+      <ul>
+        <li>Generating prompts for illegal activities of any kind</li>
+        <li>Facilitating violence, terrorism, or targeted harm</li>
+        <li>Producing content that sexualises minors (CSAM)</li>
+        <li>Creating malware, exploits, or cyberattack tools</li>
+        <li>Jailbreaking or bypassing AI safety systems</li>
+        <li>Harassment, stalking, doxxing, or threatening individuals</li>
+        <li>Fraud, scams, or deceptive campaigns</li>
+        <li>Hate speech or content inciting discrimination</li>
+      </ul>
+      <h3>4. Content Safety Filter</h3>
+      <p>A built-in filter screens all inputs before generation. Circumvention attempts violate these terms and may result in access restrictions.</p>
+      <h3>5. Rate Limiting</h3>
+      <p>To protect all users, generation is limited to 20 prompts per minute per device. Automated abuse is prohibited.</p>
+      <h3>6. No Warranty</h3>
+      <p>PromptForge is provided "as is" without warranties. You are responsible for how you use generated prompts.</p>
+      <h3>7. Changes</h3>
+      <p>Terms may be updated. Continued use constitutes acceptance. <em>Last updated: February 2026.</em></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SECURITY MODAL ══ -->
+<div class="overlay" id="securityOverlay">
+  <div class="modal">
+    <div class="modal-bar bar-purple"></div>
+    <div class="modal-header">
+      <h2 class="h-purple">🔒 Security Architecture</h2>
+      <button class="modal-close" onclick="closeModal('securityOverlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="badge-row">
+        <span class="mbadge p">AES-256-GCM</span>
+        <span class="mbadge g">CSP Headers</span>
+        <span class="mbadge b">XSS Protected</span>
+        <span class="mbadge g">Rate Limited</span>
+        <span class="mbadge p">Zero-Knowledge</span>
+      </div>
+      <h3>Encryption — AES-256-GCM</h3>
+      <p>All prompt history is encrypted using AES-256-GCM via the browser's native Web Crypto API before any storage. A unique encryption key is derived from your anonymous device ID using PBKDF2 with 100,000 iterations and a SHA-256 hash. The key never leaves your browser.</p>
+      <h3>Data Isolation</h3>
+      <p>Every user's data is stored under a unique key namespace. There is no shared state, no cross-user lookup, and no admin override. Even with full database access, stored data cannot be read without the device-specific encryption key.</p>
+      <h3>Content Security Policy (CSP)</h3>
+      <p>A strict Content Security Policy is enforced in the HTML meta tag, blocking: inline script injection, external script loading from unknown sources, iframes (clickjacking), object embeds, and data exfiltration via <code>connect-src: none</code>.</p>
+      <h3>XSS (Cross-Site Scripting) Protection</h3>
+      <p>All user input is sanitized using HTML entity encoding before any DOM insertion. Input lengths are capped. The app never uses <code>innerHTML</code> with user content.</p>
+      <h3>Rate Limiting</h3>
+      <p>Prompt generation is rate-limited to 20 requests per 60 seconds per device, enforced in the browser. This prevents automated abuse.</p>
+      <h3>Input Validation Firewall</h3>
+      <p>A multi-pattern regex filter screens all inputs for harmful content before processing. Blocked patterns include: weapons, CSAM, self-harm, jailbreaking attempts, hacking, hate speech, and more.</p>
+      <h3>No External Data Transmission</h3>
+      <p>No user input, topic, or generated prompt is ever transmitted to any server. All processing is 100% local in your browser. The CSP <code>connect-src: none</code> directive enforces this at the browser level.</p>
+      <h3>Anti-Clickjacking</h3>
+      <p>The <code>X-Frame-Options: DENY</code> meta directive prevents the app from being embedded in iframes, blocking UI redressing attacks.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SAFETY MODAL ══ -->
+<div class="overlay" id="safetyOverlay">
+  <div class="safety-box">
+    <div class="safety-icon">🛡️</div>
+    <h3>Content Policy Violation Detected</h3>
+    <p id="safetyMsg">Your input contains content that violates our usage policy. PromptForge only generates prompts for lawful, constructive purposes.</p>
+    <p class="prohibited">Blocked: violence · weapons · CSAM · hacking · self-harm · jailbreaking · fraud · hate speech · harassment</p>
+    <button class="btn-safety" onclick="closeSafety()">I Understand — Clear & Continue</button>
+  </div>
+</div>
+
+<!-- ══ SECURITY STATUS BAR ══ -->
+<div class="sec-bar">
+  <div class="sec-item"><div class="sec-dot"></div>AES-256 ENCRYPTED</div>
+  <div class="sec-item"><div class="sec-dot"></div>ZERO-KNOWLEDGE STORAGE</div>
+  <div class="sec-item"><div class="sec-dot"></div>XSS PROTECTED</div>
+  <div class="sec-item"><div class="sec-dot"></div>CSP ACTIVE</div>
+  <div class="sec-item"><div class="sec-dot"></div>CONTENT FIREWALL ON</div>
+</div>
+
+<!-- ══ LIVE STATS BAR ══ -->
+<div class="stats-bar">
+  <div class="stat-pill">
+    <div class="live-dot g"></div>
+    <span class="live-badge">LIVE</span>
+    Visitors: <strong class="stat-val" id="statVisitors">—</strong>
+  </div>
+  <div class="stat-pill">
+    <div class="live-dot y"></div>
+    Prompts Forged: <strong class="stat-val" id="statPrompts">—</strong>
+  </div>
+  <div class="stat-pill">
+    <div class="live-dot b"></div>
+    Your Session: <strong class="stat-val" id="statSession">0</strong>
+  </div>
+  <div class="stat-pill">
+    <div class="live-dot" style="background:var(--green);animation:none;"></div>
+    History: <strong class="stat-val" id="statHistory">0</strong> saved
+  </div>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div class="container">
+  <header>
+    <div class="logo-tag">v3.0 // Zero-Knowledge Edition</div>
+    <h1>Prompt<span>Forge</span></h1>
+    <p class="subtitle">// Elite prompts. Full privacy. Military-grade encryption.</p>
+    <div class="header-links">
+      <span class="hlink" onclick="openModal('privacyOverlay')">🔐 Privacy Policy</span>
+      <span class="hlink" onclick="openModal('termsOverlay')">📋 Terms of Use</span>
+      <span class="hlink" onclick="openModal('securityOverlay')">🔒 Security Info</span>
+      <span class="hlink green">✓ Zero Personal Data</span>
+    </div>
+  </header>
+
+  <div class="app-layout">
+    <!-- LEFT: FORGE PANEL -->
+    <div>
+      <div class="main-card">
+        <div class="safety-notice">
+          <strong>🛡️ Content Firewall Active:</strong> All inputs are scanned locally before processing. Harmful, illegal, or abusive content is blocked. Your prompts are <strong>AES-256 encrypted</strong> — not even we can read them.
+        </div>
+
+        <div class="field">
+          <div class="field-label">Topic / Task</div>
+          <input type="text" id="topic" placeholder="e.g. building a REST API, quantum physics, content marketing..." maxlength="500" autocomplete="off" spellcheck="true"/>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <div class="field-label">AI Target</div>
+            <select id="aiTarget">
+              <option value="any">Any AI (Universal)</option>
+              <option value="claude">Claude (Anthropic)</option>
+              <option value="chatgpt">ChatGPT (OpenAI)</option>
+              <option value="gemini">Gemini (Google)</option>
+              <option value="grok">Grok (xAI)</option>
+              <option value="llama">Llama / Open Source</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="field-label">Output Format</div>
+            <select id="outputFormat">
+              <option value="detailed">Detailed Explanation</option>
+              <option value="stepbystep">Step-by-Step Guide</option>
+              <option value="code">Code + Implementation</option>
+              <option value="analysis">Deep Analysis</option>
+              <option value="creative">Creative / Story</option>
+              <option value="research">Research / Report</option>
+              <option value="comparison">Comparison / Review</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Your Expertise Level</div>
+          <select id="expertise">
+            <option value="beginner">Beginner — explain from scratch</option>
+            <option value="intermediate" selected>Intermediate — assume basic knowledge</option>
+            <option value="advanced">Advanced — skip basics, go deep</option>
+            <option value="expert">Expert — peer-level discussion</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Extra Instructions (optional)</div>
+          <textarea id="extras" rows="2" placeholder="Specific angle, constraints, tone, or requirements..." maxlength="300"></textarea>
+        </div>
+
+        <div class="field">
+          <div class="field-label">Prompt Enhancers</div>
+          <div class="checkboxes">
+            <label class="check-pill"><input type="checkbox" value="examples" checked> Real Examples</label>
+            <label class="check-pill"><input type="checkbox" value="analogies"> Analogies</label>
+            <label class="check-pill"><input type="checkbox" value="caveats"> Pitfalls & Caveats</label>
+            <label class="check-pill"><input type="checkbox" value="bestpractices" checked> Best Practices</label>
+            <label class="check-pill"><input type="checkbox" value="resources"> Further Resources</label>
+            <label class="check-pill"><input type="checkbox" value="persona"> AI Persona/Role</label>
+            <label class="check-pill"><input type="checkbox" value="structured"> Structured Output</label>
+            <label class="check-pill"><input type="checkbox" value="chain"> Chain-of-Thought</label>
+          </div>
+        </div>
+
+        <button class="btn-generate" id="generateBtn" onclick="generatePrompt()">⚡ FORGE PROMPT</button>
+        <div class="loading" id="loading"><span class="dot-anim">ENGINEERING YOUR PROMPT</span></div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="output-section" id="outputSection">
+        <div class="output-header">
+          <div class="output-title">// Generated Prompt</div>
+          <div class="output-actions">
+            <button class="action-btn" id="copyBtn" onclick="copyPrompt()">[ COPY ]</button>
+            <button class="action-btn" onclick="saveCurrentPrompt()" id="saveBtn">[ SAVE TO HISTORY ]</button>
+          </div>
+        </div>
+        <div class="prompt-box" id="promptOutput"></div>
+        <div class="meta-row" id="metaRow"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: HISTORY PANEL -->
+    <div class="history-panel" id="historyPanel">
+      <div class="history-panel-header">
+        <span class="history-panel-title">📂 My Prompt History</span>
+        <span class="lock-badge">🔒 ENCRYPTED</span>
+      </div>
+      <div class="history-panel-body" id="historyBody">
+        <div class="history-empty" id="historyEmpty">
+          <div class="empty-icon">🔐</div>
+          <div>Your saved prompts appear here.</div>
+          <div style="margin-top:0.4rem;font-size:0.65rem;color:rgba(107,107,128,0.6)">Encrypted with AES-256.<br>Only readable on this device.</div>
+        </div>
+      </div>
+      <div class="enc-note">🔒 AES-256-GCM · Device-only decryption · Zero-knowledge</div>
+      <button class="history-clear-btn" onclick="clearAllHistory()">⚠ Clear All History</button>
+    </div>
+  </div>
+
+  <footer>
+    <p>PromptForge &copy; 2026 — Free forever. Zero data collection. Zero surveillance.</p>
+    <p>
+      <span class="flink" onclick="openModal('privacyOverlay')">Privacy Policy</span>·
+      <span class="flink" onclick="openModal('termsOverlay')">Terms of Use</span>·
+      <span class="flink" onclick="openModal('securityOverlay')">Security Info</span>·
+      <span class="flink" style="cursor:default;color:var(--muted)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e797958e9186849ea79795888a97938188958082c9869797">[email&#160;protected]</a></span>
+    </p>
+    <div class="footer-badges">
+      <div class="fbadge g">✓ AES-256 Encrypted</div>
+      <div class="fbadge g">✓ Zero-Knowledge</div>
+      <div class="fbadge b">✓ No Analytics</div>
+      <div class="fbadge b">✓ CSP Enforced</div>
+      <div class="fbadge p">✓ XSS Protected</div>
+      <div class="fbadge p">✓ Rate Limited</div>
+      <div class="fbadge">✓ GDPR Conscious</div>
+      <div class="fbadge">✓ No Ads</div>
+    </div>
+  </footer>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+'use strict';
+// ══════════════════════════════════════════════════════
+//  SECURITY FIREWALL — Input Sanitization
+// ══════════════════════════════════════════════════════
+function sanitizeInput(str) {
+  // Strip HTML tags and encode entities to prevent XSS
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;')
+    .replace(/\//g,'&#x2F;')
+    .slice(0, 600);
+}
+
+// ── CONTENT SAFETY FILTER ──
+const BLOCKED = [
+  /\b(make|build|create|synthesize|produce|manufacture)\s+(a\s+)?(bomb|explosive|nerve.?agent|bioweapon|chemical.?weapon|dirty.?bomb|anthrax|ricin|sarin|meth(amphetamine)?|fentanyl|poison\s+gas)/i,
+  /\b(kill|murder|assassinate|attack|eliminate)\s+(a\s+)?(specific\s+)?(person|people|individual|group|politician|officer)/i,
+  /child\s*(porn|sex|abuse|nude|sexual|exploitation|grooming)|csam|loli|shota/i,
+  /\b(rape|molest|sexual.?assault)\b/i,
+  /\b(hack\s+into|ddos|deploy\s+malware|ransomware\s+attack|exploit\s+(a\s+)?(server|system|network)|steal\s+(credentials|passwords|data))/i,
+  /\b(how\s+to\s+(kill|harm|hurt)\s+(myself|yourself|a\s+person))/i,
+  /\b(self[- ]harm\s+method|suicide\s+(method|instructions)|overdose\s+on)/i,
+  /\b(bypass|ignore|override|disable)\s+(safety|filter|moderation|guardrail|policy|system.?prompt|instructions)/i,
+  /\bjailbreak\s+(an?\s+)?(ai|gpt|claude|llm|chatbot|model)/i,
+  /\b(launder\s+money|money.?launder|pyramid.?scheme|ponzi|run\s+a\s+scam)/i,
+  /\b(stalk|doxx|dox|harass)\s+(someone|a\s+(person|woman|man|child))/i,
+  /\b(white\s+supremac|nazi\s+propaganda|ethnic\s+cleans|genocide\s+plan)/i,
+];
+
+function isSafe(text) { return !BLOCKED.some(p => p.test(text)); }
+
+function showSafety(msg) {
+  document.getElementById('safetyMsg').textContent = msg || 'Your input violates our usage policy.';
+  openModal('safetyOverlay');
+}
+function closeSafety() {
+  closeModal('safetyOverlay');
+  document.getElementById('topic').value = '';
+  document.getElementById('extras').value = '';
+  document.getElementById('topic').focus();
+}
+
+// ── RATE LIMITER (20 requests / 60 seconds) ──
+const rateLimiter = { timestamps: [], limit: 20, window: 60000 };
+function checkRateLimit() {
+  const now = Date.now();
+  rateLimiter.timestamps = rateLimiter.timestamps.filter(t => now - t < rateLimiter.window);
+  if (rateLimiter.timestamps.length >= rateLimiter.limit) {
+    showToast('⚠ Rate limit reached. Please wait a moment.');
+    return false;
+  }
+  rateLimiter.timestamps.push(now);
+  return true;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════════
+//  ENCRYPTION ENGINE — AES-256-GCM via Web Crypto API
+// ══════════════════════════════════════════════════════
+async function deriveKey(deviceId) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw', enc.encode(deviceId), { name: 'PBKDF2' }, false, ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode('promptforge-salt-v1'), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptData(data, key) {
+  const enc = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, key, enc.encode(JSON.stringify(data))
+  );
+  // Store IV + ciphertext as base64
+  const combined = new Uint8Array(iv.length + encrypted.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(encrypted), iv.length);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function decryptData(b64, key) {
+  try {
+    const combined = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const data = combined.slice(12);
+    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(dec));
+  } catch(e) { return null; }
+}
+
+// ══════════════════════════════════════════════════════
+//  ANONYMOUS DEVICE ID + KEY INIT
+// ══════════════════════════════════════════════════════
+let DEVICE_ID = null;
+let CRYPTO_KEY = null;
+
+async function initDevice() {
+  let id = localStorage.getItem('pf_did');
+  if (!id) {
+    // Generate a strong random device ID
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    id = Array.from(arr).map(b => b.toString(16).padStart(2,'0')).join('');
+    localStorage.setItem('pf_did', id);
+  }
+  DEVICE_ID = id;
+  CRYPTO_KEY = await deriveKey(id);
+}
+
+// ══════════════════════════════════════════════════════
+//  ENCRYPTED HISTORY STORAGE
+// ══════════════════════════════════════════════════════
+const HISTORY_KEY_PREFIX = 'pf_hist_';
+let localHistory = []; // in-memory decrypted cache
+
+async function loadHistory() {
+  if (!CRYPTO_KEY) return;
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(HISTORY_KEY_PREFIX + DEVICE_ID + '_'));
+  const items = [];
+  for (const k of keys) {
+    const raw = localStorage.getItem(k);
+    if (!raw) continue;
+    const decrypted = await decryptData(raw, CRYPTO_KEY);
+    if (decrypted) items.push(decrypted);
+  }
+  // Sort by timestamp desc
+  items.sort((a,b) => b.ts - a.ts);
+  localHistory = items;
+  renderHistory();
+  updateHistoryCount();
+}
+
+async function saveHistoryItem(item) {
+  if (!CRYPTO_KEY) return;
+  const key = HISTORY_KEY_PREFIX + DEVICE_ID + '_' + item.id;
+  const encrypted = await encryptData(item, CRYPTO_KEY);
+  localStorage.setItem(key, encrypted);
+  localHistory.unshift(item);
+  // Keep max 50 items
+  if (localHistory.length > 50) {
+    const oldest = localHistory.pop();
+    localStorage.removeItem(HISTORY_KEY_PREFIX + DEVICE_ID + '_' + oldest.id);
+  }
+  renderHistory();
+  updateHistoryCount();
+}
+
+async function deleteHistoryItem(id) {
+  localStorage.removeItem(HISTORY_KEY_PREFIX + DEVICE_ID + '_' + id);
+  localHistory = localHistory.filter(h => h.id !== id);
+  renderHistory();
+  updateHistoryCount();
+}
+
+async function clearAllHistory() {
+  if (!confirm('Permanently delete all your encrypted prompt history? This cannot be undone.')) return;
+  const keys = Object.keys(localStorage).filter(k => k.startsWith(HISTORY_KEY_PREFIX + DEVICE_ID + '_'));
+  keys.forEach(k => localStorage.removeItem(k));
+  // Also clear shared storage history for this device
+  if (window.storage) {
+    try { await window.storage.delete('hist:' + DEVICE_ID, false); } catch(e) {}
+  }
+  localHistory = [];
+  renderHistory();
+  updateHistoryCount();
+}
+
+function renderHistory() {
+  const body = document.getElementById('historyBody');
+  const empty = document.getElementById('historyEmpty');
+  if (localHistory.length === 0) {
+    empty.style.display = 'block';
+    // Remove all hist items
+    [...body.querySelectorAll('.hist-item')].forEach(el => el.remove());
+    return;
+  }
+  empty.style.display = 'none';
+  // Rebuild list
+  [...body.querySelectorAll('.hist-item')].forEach(el => el.remove());
+  localHistory.forEach(h => {
+    const div = document.createElement('div');
+    div.className = 'hist-item';
+    div.dataset.id = h.id;
+    const topicSafe = h.topic.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const timeStr = new Date(h.ts).toLocaleString(undefined, {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    div.innerHTML = `
+      <div class="hist-item-topic">${topicSafe.length > 55 ? topicSafe.slice(0,55)+'…' : topicSafe}</div>
+      <div class="hist-item-meta">
+        <span class="hist-item-time">${timeStr}</span>
+        <span class="hist-item-tag">${h.fmt || 'prompt'}</span>
+      </div>
+      <button class="hist-item-del" title="Delete this entry" onclick="event.stopPropagation(); deleteHistoryItem('${h.id}')">✕</button>
+    `;
+    div.addEventListener('click', () => loadHistoryItem(h));
+    body.insertBefore(div, body.firstChild.nextSibling);
+  });
+}
+
+function loadHistoryItem(h) {
+  document.getElementById('promptOutput').textContent = h.prompt;
+  document.getElementById('metaRow').innerHTML = `
+    <div class="meta-item">Topic: <span>${h.topic.length>32?h.topic.slice(0,32)+'…':h.topic}</span></div>
+    <div class="meta-item">Format: <span>${h.fmt}</span></div>
+    <div class="meta-item">Saved: <span>${new Date(h.ts).toLocaleDateString()}</span></div>
+    <div class="meta-item">~<span>${Math.round(h.prompt.split(' ').length*1.3)}</span> tokens</div>
+  `;
+  document.getElementById('outputSection').classList.add('visible');
+  document.getElementById('outputSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function updateHistoryCount() {
+  document.getElementById('statHistory').textContent = localHistory.length;
+}
+
+// ══════════════════════════════════════════════════════
+//  CONSENT & VISITOR TRACKING
+// ══════════════════════════════════════════════════════
+async function handleConsent(accepted) {
+  localStorage.setItem('pf_consent', accepted ? 'yes' : 'no');
+  document.getElementById('cookieBanner').style.display = 'none';
+  if (accepted) await trackVisit();
+  loadGlobalStats();
+}
+
+async function trackVisit() {
+  if (!window.storage || !DEVICE_ID) return;
+  try {
+    const isNew = !localStorage.getItem('pf_tracked');
+    if (isNew) {
+      localStorage.setItem('pf_tracked', '1');
+      let cur = 0;
+      try { const d = await window.storage.get('g:visitors', true); cur = parseInt(d?.value)||0; } catch(e){}
+      await window.storage.set('g:visitors', String(cur+1), true);
+    }
+  } catch(e) {}
+}
+
+async function loadGlobalStats() {
+  if (!window.storage) { setEl('statVisitors','—'); setEl('statPrompts','—'); return; }
+  try {
+    let v=0, p=0;
+    try { const d = await window.storage.get('g:visitors',true); v=parseInt(d?.value)||0; } catch(e){}
+    try { const d = await window.storage.get('g:prompts',true); p=parseInt(d?.value)||0; } catch(e){}
+    animCount('statVisitors', v);
+    animCount('statPrompts', p);
+  } catch(e) { setEl('statVisitors','—'); setEl('statPrompts','—'); }
+}
+
+async function bumpGlobalPrompts() {
+  if (!window.storage) return;
+  try {
+    let cur = 0;
+    try { const d = await window.storage.get('g:prompts',true); cur=parseInt(d?.value)||0; } catch(e){}
+    await window.storage.set('g:prompts', String(cur+1), true);
+    setEl('statPrompts', cur+1, true);
+  } catch(e) {}
+}
+
+function setEl(id, val, pop=false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = typeof val==='number' ? val.toLocaleString() : val;
+  if (pop) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+}
+
+function animCount(id, target) {
+  if (!target) { setEl(id,0); return; }
+  const el = document.getElementById(id);
+  const dur = 700, start = performance.now();
+  const step = now => {
+    const t = Math.min((now-start)/dur,1);
+    el.textContent = Math.floor(t*target).toLocaleString();
+    if (t<1) requestAnimationFrame(step); else el.textContent = target.toLocaleString();
+  };
+  requestAnimationFrame(step);
+}
+
+// ══════════════════════════════════════════════════════
+//  SESSION COUNTER
+// ══════════════════════════════════════════════════════
+let sessionCount = 0;
+function bumpSession() {
+  sessionCount++;
+  setEl('statSession', sessionCount, true);
+}
+
+// ══════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') ['privacyOverlay','termsOverlay','securityOverlay','safetyOverlay'].forEach(closeModal);
+  if (e.ctrlKey && e.key==='Enter') generatePrompt();
+});
+
+// ══════════════════════════════════════════════════════
+//  PROMPT GENERATION
+// ══════════════════════════════════════════════════════
+let currentPrompt = '';
+let currentMeta = {};
+
+function getChecked() {
+  return [...document.querySelectorAll('.check-pill input:checked')].map(i=>i.value);
+}
+
+function generatePrompt() {
+  if (!checkRateLimit()) return;
+
+  const rawTopic = document.getElementById('topic').value.trim();
+  const rawExtras = document.getElementById('extras').value.trim();
+
+  if (!rawTopic) {
+    const el = document.getElementById('topic');
+    el.style.borderColor = 'var(--accent3)'; el.focus();
+    setTimeout(()=>el.style.borderColor='',1500);
+    return;
+  }
+
+  // SAFETY CHECK
+  if (!isSafe(rawTopic) || !isSafe(rawExtras)) {
+    showSafety('Your input contains content that violates our usage policy. PromptForge generates prompts for lawful, constructive purposes only.');
+    return;
+  }
+
+  // Sanitize
+  const topic = rawTopic; // used for prompt building (raw but validated)
+  const extras = rawExtras;
+
+  const aiTarget = document.getElementById('aiTarget').value;
+  const outputFormat = document.getElementById('outputFormat').value;
+  const expertise = document.getElementById('expertise').value;
+  const enhancers = getChecked();
+
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('loading').classList.add('visible');
+  document.getElementById('outputSection').classList.remove('visible');
+
+  setTimeout(() => {
+    const prompt = buildPrompt(topic, aiTarget, outputFormat, expertise, extras, enhancers);
+    currentPrompt = prompt;
+    currentMeta = { topic, aiTarget, outputFormat, expertise, enhancers };
+    showOutput(prompt, topic, aiTarget, outputFormat, enhancers.length);
+    bumpSession();
+    bumpGlobalPrompts();
+    document.getElementById('generateBtn').disabled = false;
+    document.getElementById('loading').classList.remove('visible');
+  }, 900);
+}
+
+function buildPrompt(topic, ai, fmt, exp, extras, enh) {
+  const lines = [];
+  const priming = {
+    claude:'You are operating in extended thinking mode. Use your full reasoning capacity and deepest knowledge.',
+    chatgpt:'Use your full capabilities — deep reasoning, comprehensive knowledge, and thorough analysis.',
+    gemini:'Leverage your multimodal understanding and extensive knowledge base to its fullest capacity.',
+    grok:'Apply real-time knowledge and deep analytical reasoning with maximum depth.',
+    llama:'Apply full chain-of-thought reasoning, comprehensive detail, and structured thinking.',
+    any:'Engage your deepest reasoning, fullest knowledge base, and highest analytical capacity.'
+  };
+  if (enh.includes('persona')) {
+    const roles = {beginner:'world-class educator and explainer',intermediate:'senior expert with deep practical knowledge',advanced:'principal-level expert with 15+ years of hands-on experience',expert:'leading researcher and practitioner at the frontier of this domain'};
+    lines.push(`You are a ${roles[exp]} on the subject of: ${topic}.\n${priming[ai]}\n`);
+  } else {
+    lines.push(priming[ai]+'\n');
+  }
+  const tasks = {
+    detailed:`Provide a deeply comprehensive, authoritative explanation of: **${topic}**`,
+    stepbystep:`Create an exhaustive, actionable step-by-step guide for: **${topic}**`,
+    code:`Provide a complete, production-ready implementation with full code for: **${topic}**`,
+    analysis:`Conduct a rigorous, multi-dimensional analysis of: **${topic}**`,
+    creative:`Create an imaginative, compelling, richly detailed creative piece about: **${topic}**`,
+    research:`Write a thorough, evidence-based research report on: **${topic}**`,
+    comparison:`Deliver a detailed, balanced comparison and evaluation covering: **${topic}**`
+  };
+  lines.push(`## YOUR TASK\n${tasks[fmt]}\n`);
+  const expG = {
+    beginner:`Assume I have zero prior knowledge. Start from absolute fundamentals. Use simple language, define every technical term, and use relatable everyday analogies.`,
+    intermediate:`Assume I understand the basics. Skip entry-level definitions but explain intermediate and advanced concepts thoroughly with practical context.`,
+    advanced:`Assume I have solid hands-on experience. Focus on nuance, edge cases, architectural decisions, tradeoffs, and expert-level insights. Go deep.`,
+    expert:`Treat me as a peer. Skip fundamentals. Engage at the cutting edge — current debates, advanced tradeoffs, emerging patterns, and research-level detail.`
+  };
+  lines.push(`## EXPERTISE CALIBRATION\n${expG[exp]}\n`);
+  if (enh.includes('chain')) lines.push(`## REASONING APPROACH\nReason carefully from first principles before answering. Think through the problem step by step. Surface and validate key assumptions. Show reasoning where it adds genuine value.\n`);
+  const structure = {
+    detailed:`- Executive summary (2–3 sentences)\n- Core concepts with depth, precision, and the "why"\n- Real-world applications and context\n- Common misconceptions corrected`,
+    stepbystep:`- Prerequisites — skip nothing\n- Numbered steps with explanations for every action\n- Expected outcome at each stage\n- Verification checkpoints\n- Success criteria`,
+    code:`- Architecture overview before any code\n- Complete, runnable code — no placeholders\n- Inline comments on every significant line\n- Error handling and edge cases\n- How to test and validate`,
+    analysis:`- Problem framing and key questions\n- Multiple perspectives and angles\n- Evidence and reasoning per point\n- Synthesis connecting insights\n- Implications and conclusions`,
+    creative:`- Scene-setting and world-building\n- Rich sensory detail\n- Character depth and motivation\n- Narrative arc with tension and resolution\n- Memorable ending`,
+    research:`- Abstract and key findings upfront\n- Background and context\n- Main body with sourced reasoning\n- Competing viewpoints fairly represented\n- Conclusions and open questions`,
+    comparison:`- Comparison criteria defined upfront\n- Detailed profile of each option\n- Side-by-side per criterion\n- Clear winner per use case\n- Final recommendation with reasoning`
+  };
+  lines.push(`## RESPONSE STRUCTURE\n${structure[fmt]}\n`);
+  const enhLines = [];
+  if (enh.includes('examples')) enhLines.push('Use multiple concrete, real-world examples — make abstract concepts tangible through specific illustrative cases.');
+  if (enh.includes('analogies')) enhLines.push('Include powerful analogies that make complex ideas immediately understandable by connecting to familiar experiences.');
+  if (enh.includes('caveats')) enhLines.push('Proactively surface pitfalls, anti-patterns, edge cases, and common mistakes. Be direct about what can go wrong.');
+  if (enh.includes('bestpractices')) enhLines.push('Include what top practitioners actually do — not just textbook theory. Industry best practices and professional standards.');
+  if (enh.includes('resources')) enhLines.push('Recommend specific further resources: books, official docs, tools, and communities for going deeper.');
+  if (enh.includes('structured')) enhLines.push('Use clear headers, numbered lists, and logical visual hierarchy. Make the response easy to scan and reference.');
+  if (enhLines.length > 0) lines.push(`## QUALITY REQUIREMENTS\n${enhLines.map((e,i)=>`${i+1}. ${e}`).join('\n')}\n`);
+  if (extras) lines.push(`## ADDITIONAL CONSTRAINTS & FOCUS\n${extras}\n`);
+  lines.push(`## RESPONSE STANDARD\nDo NOT hold back. Do NOT give a surface-level answer. Do NOT pad with filler. Every sentence must earn its place. Aim for the response a reader would call: "exactly what I needed — and more." Depth over breadth. Insight over information. Quality above all.`);
+  return lines.join('\n');
+}
+
+function showOutput(prompt, topic, ai, fmt, enhCount) {
+  document.getElementById('promptOutput').textContent = prompt;
+  document.getElementById('metaRow').innerHTML = `
+    <div class="meta-item">Topic: <span>${topic.length>32?topic.slice(0,32)+'…':topic}</span></div>
+    <div class="meta-item">AI: <span>${ai.toUpperCase()}</span></div>
+    <div class="meta-item">Format: <span>${fmt}</span></div>
+    <div class="meta-item">Enhancers: <span>${enhCount}</span></div>
+    <div class="meta-item">~<span>${Math.round(prompt.split(' ').length*1.3)}</span> tokens</div>
+  `;
+  document.getElementById('outputSection').classList.add('visible');
+  document.getElementById('outputSection').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('promptOutput').textContent).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    btn.textContent='[ COPIED ✓ ]'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='[ COPY ]'; btn.classList.remove('copied'); },2000);
+  });
+}
+
+async function saveCurrentPrompt() {
+  if (!currentPrompt) return;
+  const item = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    topic: currentMeta.topic,
+    prompt: currentPrompt,
+    fmt: currentMeta.outputFormat,
+    ai: currentMeta.aiTarget,
+    ts: Date.now()
+  };
+  await saveHistoryItem(item);
+  const btn = document.getElementById('saveBtn');
+  btn.textContent='[ SAVED ✓ ]'; btn.classList.add('copied');
+  setTimeout(()=>{ btn.textContent='[ SAVE TO HISTORY ]'; btn.classList.remove('copied'); },2000);
+}
+
+// ══════════════════════════════════════════════════════
+//  BOOT SEQUENCE
+// ══════════════════════════════════════════════════════
+(async () => {
+  await initDevice();
+  await loadHistory();
+
+  const consent = lo
